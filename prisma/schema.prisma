@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  JobID              Int     @id @default(autoincrement())
+  SubmitTime         Int? // Unsigned Integer
+  WaitTime           Int? // Unsigned Integer
+  RunTime            Int? // Unsigned Integer
+  NProc              Int? // Unsigned Integer
+  UsedCPUTime        Float?
+  UsedMemory         Float?
+  ReqNProcs          Int? // Unsigned Integer
+  ReqTime            Float?
+  ReqMemory          Float?
+  Status             Int? // Unsigned Integer
+  UserID             String?
+  GroupID            String?
+  ExecutableID       String?
+  QueueID            String?
+  PartitionID        String?
+  OrigSiteID         String?
+  LastRunSiteID      String?
+  JobStructure       String?
+  JobStructureParams String?
+  UsedNetwork        Float?
+  UsedLocalDiskSpace Float?
+  UsedResources      String?
+  ReqPlatform        String?
+  ReqNetwork         Float?
+  ReqLocalDiskSpace  Float?
+  ReqResources       String?
+  VOID               String?
+  ProjectID          String?
+
+  @@map("Jobs")
+}
