@@ -1,79 +1,61 @@
 import * as tf from "@tensorflow/tfjs-node-gpu";
-import { PrismaClient, Job } from "@prisma/client";
-import { encodeString } from "../utils/helpers";
+import { getData } from "../utils/db";
 
-type PickedFields = Pick<
-  Job,
-  | "SubmitTime"
-  | "UsedMemory"
-  | "ReqNProcs"
-  | "ReqTime"
-  | "ReqMemory"
-  | "UserID"
-  | "GroupID"
-  | "QueueID"
-  | "PartitionID"
-  | "OrigSiteID"
-  | "WaitTime"
-  | "NProc"
-  | "Status"
-  | "ExecutableID"
-  | "LastRunSiteID"
-  | "RunTime"
->;
+/**
+ * Normalize the values in the input values tensor
+ */
+function normalize(tensor: tf.Tensor2D) {
+  const result = tf.tidy(() => {
+    // Get minimum values
+    const MIN_VALUES = tf.min(tensor, 0);
 
-type Process = { [P in keyof PickedFields]-?: NonNullable<PickedFields[P]> };
+    // Get maximum values
+    const MAX_VALUES = tf.max(tensor, 0);
 
-const prisma = new PrismaClient();
+    // Reduce values by minimum values
+    const TENSOR_SUBTRACT_MIN_VALUE = tf.sub(tensor, MIN_VALUES);
 
-async function train(model: tf.Sequential) {}
+    // Get range of values
+    const RANGE_SIZE = tf.sub(MAX_VALUES, MIN_VALUES);
+
+    // Get normalized values by dividing subtracted values with rangeW
+    const NORMALIZED_VALUES = tf.divNoNan(
+      TENSOR_SUBTRACT_MIN_VALUE,
+      RANGE_SIZE
+    );
+
+    return { NORMALIZED_VALUES, MIN_VALUES, MAX_VALUES };
+  });
+
+  return result;
+}
+
+async function train(
+  model: tf.Sequential,
+  inputTensor: tf.Tensor2D,
+  outputTensor: tf.Tensor1D
+) {
+  // Compile the model with the defined optimizer and specify a loss function to use.
+  model.compile({
+    optimizer: "adam", // Adam changes the learning rate over time which is useful.
+    loss: "meanSquaredError",
+    metrics: ["accuracy"],
+  });
+
+  // Finally do the training itself
+  let results = await model.fit(inputTensor, outputTensor, {
+    shuffle: true, // Ensure data is shuffled again before using each time.
+    validationSplit: 0.2,
+    batchSize: 512, // Update weights after every 512 examples.
+    epochs: 50, // Go over the data 50 times!
+    callbacks: {
+      onEpochEnd: (epoch, logs) => console.log("Data for epoch " + epoch, logs),
+    },
+  });
+}
 
 async function main() {
-  const processes = (await prisma.job.findMany({
-    take: 100,
-    select: {
-      SubmitTime: true,
-      UsedMemory: true,
-      ReqNProcs: true,
-      ReqTime: true,
-      ReqMemory: true,
-      UserID: true,
-      GroupID: true,
-      QueueID: true,
-      PartitionID: true,
-      OrigSiteID: true,
-      WaitTime: true,
-      NProc: true,
-      Status: true,
-      ExecutableID: true,
-      LastRunSiteID: true,
-      RunTime: true,
-    },
-  })) as Process[];
-
-  const INPUTS = processes
-    .filter((process) => process.RunTime !== null)
-    .map((process) => [
-      process.SubmitTime,
-      process.UsedMemory,
-      process.ReqNProcs,
-      process.ReqTime,
-      process.ReqMemory,
-      encodeString(process.UserID),
-      encodeString(process.GroupID),
-      encodeString(process.QueueID),
-      encodeString(process.PartitionID),
-      encodeString(process.OrigSiteID),
-      process.WaitTime,
-      process.NProc,
-      process.Status,
-      encodeString(process.ExecutableID),
-      encodeString(process.LastRunSiteID),
-    ]);
-
-  const OUTPUTS = processes
-    .filter((process) => process.RunTime !== null)
-    .map((process) => process.RunTime);
+  const { INPUTS, OUTPUTS } = await getData();
 
   // Shuffle inputs and outputs
   tf.util.shuffleCombo(INPUTS, OUTPUTS);
@@ -81,6 +63,19 @@ async function main() {
   const INPUTS_TENSOR = tf.tensor2d(INPUTS);
 
   const OUTPUTS_TENSOR = tf.tensor1d(OUTPUTS);
+
+  // Normalize input values
+  const FEATURE_RESULTS = normalize(INPUTS_TENSOR);
+  // console.log("Normalized Values:");
+  // FEATURE_RESULTS.NORMALIZED_VALUES.print();
+
+  // console.log("Min Values:");
+  // FEATURE_RESULTS.MIN_VALUES.print();
+
+  // console.log("Max Values:");
+  // FEATURE_RESULTS.MAX_VALUES.print();
+
+  INPUTS_TENSOR.dispose();
 
   // Define model
   const model = tf.sequential();
@@ -97,11 +92,16 @@ async function main() {
   model.summary();
 
   // Train the model
-  await train(model);
+  // await train(model, INPUTS_TENSOR, OUTPUTS_TENSOR);
 
   // Temp cleanup
-  INPUTS_TENSOR.dispose();
   OUTPUTS_TENSOR.dispose();
+  FEATURE_RESULTS.NORMALIZED_VALUES.dispose();
+  FEATURE_RESULTS.MIN_VALUES.dispose();
+  FEATURE_RESULTS.MAX_VALUES.dispose();
+  model.dispose();
+
+  console.log("> Tensorflow memory: ", tf.memory());
 }
 
 main();
