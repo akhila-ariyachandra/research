@@ -3,5 +3,5 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsdk": "node_modules\\typescript\\lib",
-  "cSpell.words": ["deprioritize", "Quantums"]
+  "cSpell.words": ["deprioritize", "Quantums", "relu"]
 }

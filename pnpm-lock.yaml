@@ -4,7 +4,7 @@ dependencies:
   '@prisma/client':
     specifier: 4.12.0
     version: 4.12.0(prisma@4.12.0)
-  '@tensorflow/tfjs-node':
+  '@tensorflow/tfjs-node-gpu':
     specifier: 4.4.0
     version: 4.4.0(seedrandom@3.0.5)
 
@@ -159,8 +159,8 @@ packages:
       '@tensorflow/tfjs-core': 4.4.0
     dev: false
 
-  /@tensorflow/tfjs-node@4.4.0(seedrandom@3.0.5):
-    resolution: {integrity: sha512-+JSAddsupjSQUDZeb7QGOFkL3Tty3kjPHx8ethiYFzwTZJHCMvM7wZJd0Fqnjxym6A0KpsmB7SPZgwRRXVIlPA==}
+  /@tensorflow/tfjs-node-gpu@4.4.0(seedrandom@3.0.5):
+    resolution: {integrity: sha512-RdSUYd0sdttGi/jZIhZ1kpyS9MJkLxeY8J2YvULyuVLwTgZJiI/M0khbPjb/WovE2z5cNFvOQ5wV8y4LLuUCsg==}
     engines: {node: '>=8.11.0'}
     requiresBuild: true
     dependencies:
