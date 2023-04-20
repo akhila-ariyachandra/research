@@ -31,8 +31,8 @@ function normalize(tensor: tf.Tensor2D) {
 }
 
 async function train(
-  model: tf.Sequential,
-  inputTensor: tf.Tensor2D,
+  model: tf.LayersModel,
+  inputTensor: tf.Tensor,
   outputTensor: tf.Tensor1D
 ) {
   // Compile the model with the defined optimizer and specify a loss function to use.
@@ -46,11 +46,26 @@ async function train(
   let results = await model.fit(inputTensor, outputTensor, {
     shuffle: true, // Ensure data is shuffled again before using each time.
     validationSplit: 0.2,
-    batchSize: 512, // Update weights after every 512 examples.
-    epochs: 50, // Go over the data 50 times!
-    callbacks: {
+    batchSize: 512,
+    epochs: 80000,
+    /* callbacks: {
       onEpochEnd: (epoch, logs) => console.log("Data for epoch " + epoch, logs),
-    },
+    }, */
+  });
+
+  const errorLoss = results.history.loss as number[];
+  const validationErrorLoss = results.history.val_loss as number[];
+  console.log(
+    "Average error loss: " + Math.sqrt(errorLoss[errorLoss.length - 1])
+  );
+  console.log(
+    "Average validation error loss: " +
+      Math.sqrt(validationErrorLoss[validationErrorLoss.length - 1])
+  );
+
+  // Save model
+  await model.save("file://./model", {
+    includeOptimizer: true,
   });
 }
 
@@ -77,29 +92,41 @@ async function main() {
 
   INPUTS_TENSOR.dispose();
 
-  // Define model
-  const model = tf.sequential();
-  model.add(
-    tf.layers.dense({
-      inputShape: [15],
-      units: 32,
-      activation: "relu",
-    })
-  );
-  model.add(tf.layers.dense({ units: 16, activation: "relu" }));
-  model.add(tf.layers.dense({ units: 1, activation: "linear" }));
+  // Load/Create model
+  let model: tf.Sequential | null = null;
+  try {
+    model = (await tf.loadLayersModel(
+      "file://./model/model.json"
+    )) as tf.Sequential;
+    console.log("> Saved model loaded");
+  } catch {
+    model = tf.sequential();
+    model.add(
+      tf.layers.dense({
+        inputShape: [15],
+        units: 32,
+        activation: "relu",
+      })
+    );
+    model.add(tf.layers.dense({ units: 16, activation: "relu" }));
+    model.add(tf.layers.dense({ units: 1, activation: "linear" }));
+  }
 
-  model.summary();
+  if (model) {
+    model.summary();
 
-  // Train the model
-  // await train(model, INPUTS_TENSOR, OUTPUTS_TENSOR);
+    // Train the model
+    await train(model, FEATURE_RESULTS.NORMALIZED_VALUES, OUTPUTS_TENSOR);
+
+    model.dispose();
+  }
+
+  FEATURE_RESULTS.NORMALIZED_VALUES.dispose();
+  OUTPUTS_TENSOR.dispose();
 
   // Temp cleanup
-  OUTPUTS_TENSOR.dispose();
-  FEATURE_RESULTS.NORMALIZED_VALUES.dispose();
   FEATURE_RESULTS.MIN_VALUES.dispose();
   FEATURE_RESULTS.MAX_VALUES.dispose();
-  model.dispose();
 
   console.log("> Tensorflow memory: ", tf.memory());
 }

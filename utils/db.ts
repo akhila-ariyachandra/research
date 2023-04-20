@@ -27,7 +27,7 @@ const prisma = new PrismaClient();
 
 export async function getData() {
   const processes = (await prisma.job.findMany({
-    take: 20,
+    take: 10000,
     select: {
       SubmitTime: true,
       UsedMemory: true,
@@ -45,6 +45,11 @@ export async function getData() {
       ExecutableID: true,
       LastRunSiteID: true,
       RunTime: true,
+    },
+    where: {
+      RunTime: {
+        gte: 10000,
+      },
     },
   })) as Process[];
 
