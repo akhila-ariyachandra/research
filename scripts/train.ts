@@ -1,5 +1,6 @@
 import * as tf from "@tensorflow/tfjs-node-gpu";
 import { getData } from "../utils/db";
+import { MODEL_PATH, MODEL_JSON_PATH } from "../utils/constants";
 
 /**
  * Normalize the values in the input values tensor
@@ -47,7 +48,7 @@ async function train(
     shuffle: true, // Ensure data is shuffled again before using each time.
     validationSplit: 0.2,
     batchSize: 512,
-    epochs: 80000,
+    epochs: 20000,
     /* callbacks: {
       onEpochEnd: (epoch, logs) => console.log("Data for epoch " + epoch, logs),
     }, */
@@ -64,7 +65,7 @@ async function train(
   );
 
   // Save model
-  await model.save("file://./model", {
+  await model.save(MODEL_PATH, {
     includeOptimizer: true,
   });
 }
@@ -95,9 +96,7 @@ async function main() {
   // Load/Create model
   let model: tf.Sequential | null = null;
   try {
-    model = (await tf.loadLayersModel(
-      "file://./model/model.json"
-    )) as tf.Sequential;
+    model = (await tf.loadLayersModel(MODEL_JSON_PATH)) as tf.Sequential;
     console.log("> Saved model loaded");
   } catch {
     model = tf.sequential();
