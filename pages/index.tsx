@@ -1,6 +1,10 @@
 import axios from "axios";
 import { type FC, useState } from "react";
-import type { BasicMLFQResponse, MLMLFQResponse } from "@/utils/types";
+import type {
+  BasicMLFQResponse,
+  MLMLFQResponse,
+  EnhancedMLFQResponse,
+} from "@/utils/types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -9,6 +13,8 @@ import { formSchema, FormSchema } from "@/utils/schema";
 const HomePage: FC = () => {
   const [basicResponse, setBasicResponse] = useState<BasicMLFQResponse>(null);
   const [mlResponse, setMlResponse] = useState<MLMLFQResponse>(null);
+  const [enhancedResponse, setEnhancedResponse] =
+    useState<EnhancedMLFQResponse>(null);
 
   const {
     register,
@@ -17,7 +23,7 @@ const HomePage: FC = () => {
   } = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      recs: 100,
+      recs: 1000,
     },
   });
 
@@ -44,10 +50,24 @@ const HomePage: FC = () => {
       setMlResponse(data);
     },
   });
+  const enhancedMutation = useMutation({
+    mutationFn: async (data: FormSchema) => {
+      const response = await axios.post<EnhancedMLFQResponse>(
+        "/api/mlfq/enhanced",
+        data
+      );
+
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setEnhancedResponse(data);
+    },
+  });
 
   const submit = async (formData: FormSchema) => {
     basicMutation.mutate(formData);
     mlMutation.mutate(formData);
+    enhancedMutation.mutate(formData);
   };
 
   return (
@@ -110,6 +130,29 @@ const HomePage: FC = () => {
                   <p>
                     <strong>Number of Context Switches: </strong>
                     {mlResponse.contextSwitches}
+                  </p>
+                </>
+              )}
+            </td>
+          </tr>
+
+          <tr>
+            <td>Enhanced MLFQ</td>
+            <td>
+              Multi-Layer Feedback Queue with Dynamic Time Quantums with Limits
+            </td>
+
+            <td>
+              {!!enhancedResponse && (
+                <>
+                  <p>
+                    <strong>Average Turnaround Time: </strong>
+                    {enhancedResponse.avgTurnaroundTime}
+                  </p>
+
+                  <p>
+                    <strong>Number of Context Switches: </strong>
+                    {enhancedResponse.contextSwitches}
                   </p>
                 </>
               )}

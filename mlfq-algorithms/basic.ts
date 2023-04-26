@@ -1,6 +1,6 @@
 import { Process } from "@/utils/classes";
 
-export default class Scheduler {
+export default class BasicScheduler {
   private processes: Process[];
   private readyQueue1: Process[] = [];
   private readyQueue2: Process[] = [];

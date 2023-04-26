@@ -11,6 +11,8 @@ export interface BasicMLFQResponse extends BasicResponse {
 
 export interface MLMLFQResponse extends BasicResponse {}
 
+export interface EnhancedMLFQResponse extends MLMLFQResponse {}
+
 type PickedFields = Pick<
   Job,
   | "SubmitTime"

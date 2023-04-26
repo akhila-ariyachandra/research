@@ -1,6 +1,6 @@
 import { ExtendedProcess } from "@/utils/classes";
 
-export default class Scheduler {
+export default class MLScheduler {
   private processes: ExtendedProcess[];
   private readyQueue1: ExtendedProcess[] = [];
   private readyQueue2: ExtendedProcess[] = [];
@@ -8,7 +8,7 @@ export default class Scheduler {
   private time: number;
   private completedQueue: ExtendedProcess[] = []; // Array to store process completed at a time unit
   private completedProcesses: ExtendedProcess[] = []; // Array to store all completed processes
-  private timeQuantums: number[] = [0, 0, 0];
+  protected timeQuantums: number[] = [0, 0, 0];
   private contextSwitches = 0;
 
   constructor(processes: ExtendedProcess[], startTime: number) {
@@ -53,7 +53,7 @@ export default class Scheduler {
     }
   }
 
-  private calculateTimeQuantum(queue: ExtendedProcess[], priority: number) {
+  protected calculateTimeQuantum(queue: ExtendedProcess[], priority: number) {
     const position = priority - 1;
     let timeQuantum = this.timeQuantums[position];
 
