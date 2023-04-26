@@ -1,49 +1,21 @@
-import { getData } from "./utils/db";
+import { ExtendedProcess } from "@/utils/classes";
 
-class Process {
-  arrivalTime: number;
-  burstTime: number;
-  estimatedBurstTime: number;
-  remainingBurstTime: number;
-  priority: number;
-  completedTime: number = 0;
-
-  constructor(
-    arrivalTime: number,
-    burstTime: number,
-    estimatedBurstTime?: number
-  ) {
-    this.arrivalTime = arrivalTime;
-    this.burstTime = burstTime;
-    this.remainingBurstTime = burstTime;
-    this.priority = 1;
-    this.estimatedBurstTime = estimatedBurstTime ?? burstTime;
-  }
-}
-
-class Scheduler {
-  private processes: Process[];
-  private readyQueue1: Process[];
-  private readyQueue2: Process[];
-  private readyQueue3: Process[];
+export default class Scheduler {
+  private processes: ExtendedProcess[];
+  private readyQueue1: ExtendedProcess[] = [];
+  private readyQueue2: ExtendedProcess[] = [];
+  private readyQueue3: ExtendedProcess[] = [];
   private time: number;
-  private completedQueue: Process[] = []; // Array to store process completed at a time unit
-  private completedProcesses: Process[] = []; // Array to store all completed processes
-  private timeQuantums = [27409, 45686, 62712];
+  private completedQueue: ExtendedProcess[] = []; // Array to store process completed at a time unit
+  private completedProcesses: ExtendedProcess[] = []; // Array to store all completed processes
+  private timeQuantums: number[] = [0, 0, 0];
   private contextSwitches = 0;
 
-  constructor(processes: Process[]) {
+  constructor(processes: ExtendedProcess[], startTime: number) {
     this.processes = processes;
-    this.readyQueue1 = [];
-    this.readyQueue2 = [];
-    this.readyQueue3 = [];
-    this.time = 1136074694;
+    this.time = startTime;
   }
 
-  /**
-   * Add the processes that match the arrival time to the current time to
-   * the 1st queue
-   */
   private addArrivingProcesses() {
     // Get all processes that match the arrival time
     const newProcesses = this.processes.filter(
@@ -59,16 +31,6 @@ class Scheduler {
     this.processes = [...otherProcesses];
   }
 
-  private deprioritizeProcess(process: Process) {
-    if (process.priority === 2) {
-      this.readyQueue2.push(process);
-    } else if (process.priority === 3) {
-      this.readyQueue3.push(process);
-    } else {
-      this.readyQueue1.push(process);
-    }
-  }
-
   /**
    * Display details about complete processes and cleanup queue
    */
@@ -81,13 +43,49 @@ class Scheduler {
     }
   }
 
-  private executeProcess(queue: Process[], priority: number) {
+  private deprioritizeProcess(process: ExtendedProcess) {
+    if (process.priority === 2) {
+      this.readyQueue2.push(process);
+    } else if (process.priority === 3) {
+      this.readyQueue3.push(process);
+    } else {
+      this.readyQueue1.push(process);
+    }
+  }
+
+  private calculateTimeQuantum(queue: ExtendedProcess[], priority: number) {
+    const position = priority - 1;
+    let timeQuantum = this.timeQuantums[position];
+
+    if (queue.length >= 1) {
+      let total = 0;
+
+      for (let i = 0; i < queue.length; i++) {
+        total = total + queue[i].estimatedBurstTime;
+      }
+
+      timeQuantum = Math.round(total / queue.length);
+    }
+
+    this.timeQuantums = this.timeQuantums.map((oldQuantum, index) =>
+      position === index ? timeQuantum : oldQuantum
+    );
+  }
+
+  private executeProcess(queue: ExtendedProcess[], priority: number) {
     if (queue.length === 0) {
       return;
     }
 
-    // Run the 1st process in the queue
+    // 1st process in queue
     const process = queue[0];
+
+    // Calculate Time Quantum if process just started running in queue
+    if (process.timeOnQueue === 0) {
+      this.calculateTimeQuantum(queue, priority);
+    }
+
+    // Run the 1st process in the queue
     process.remainingBurstTime = process.remainingBurstTime - 1;
     if (process.remainingBurstTime === 0) {
       // The process completes execution
@@ -101,6 +99,7 @@ class Scheduler {
         if (runningTime === this.timeQuantums[0]) {
           queue.shift();
           process.priority++;
+          process.timeOnQueue = 0;
           this.deprioritizeProcess(process);
           this.contextSwitches++; // Increase context switch count as process is paused
         }
@@ -108,6 +107,7 @@ class Scheduler {
         if (runningTime === this.timeQuantums[0] + this.timeQuantums[1]) {
           queue.shift();
           process.priority++;
+          process.timeOnQueue = 0;
           this.deprioritizeProcess(process);
           this.contextSwitches++; // Increase context switch count as process is paused
         }
@@ -116,8 +116,9 @@ class Scheduler {
           runningTime - this.timeQuantums[0] - this.timeQuantums[1];
 
         if (timeRunningOnQ3 % this.timeQuantums[2] === 0) {
+          process.timeOnQueue = 0;
           // Move the process to the end of the queue in the lowest priority queue
-          queue.push(queue.shift() as Process);
+          queue.push(queue.shift() as ExtendedProcess);
           this.contextSwitches++; // Increase context switch count as process is paused
         }
       }
@@ -132,30 +133,24 @@ class Scheduler {
       this.readyQueue3.length > 0
     ) {
       this.addArrivingProcesses();
+
       this.executeProcess(this.readyQueue1, 1);
       this.executeProcess(this.readyQueue2, 2);
       this.executeProcess(this.readyQueue3, 3);
       this.time++;
+
       this.cleanupCompleted();
     }
 
-    console.log("> Context switches: ", this.contextSwitches);
-    console.log(
-      "> Average turnaround time: ",
+    const avgTurnaroundTime =
       this.completedProcesses
         .map((process) => process.completedTime - process.arrivalTime)
         .reduce((partialSum, a) => partialSum + a, 0) /
-        this.completedProcesses.length
-    );
+      this.completedProcesses.length;
+
+    return {
+      contextSwitches: this.contextSwitches,
+      avgTurnaroundTime,
+    };
   }
 }
-
-(async () => {
-  const data = await getData(20000);
-  const processes = data.map(
-    (process) => new Process(process.SubmitTime, process.RunTime)
-  );
-
-  const scheduler = new Scheduler(processes);
-  scheduler.run();
-})();

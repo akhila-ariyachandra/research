@@ -1,49 +1,26 @@
-import { getData } from "./utils/db";
+import { Process } from "@/utils/classes";
 
-class Process {
-  arrivalTime: number;
-  burstTime: number;
-  estimatedBurstTime: number;
-  remainingBurstTime: number;
-  priority: number;
-  completedTime: number = 0;
-
-  constructor(
-    arrivalTime: number,
-    burstTime: number,
-    estimatedBurstTime?: number
-  ) {
-    this.arrivalTime = arrivalTime;
-    this.burstTime = burstTime;
-    this.remainingBurstTime = burstTime;
-    this.priority = 1;
-    this.estimatedBurstTime = estimatedBurstTime ?? burstTime;
-  }
-}
-
-class Scheduler {
+export default class Scheduler {
   private processes: Process[];
-  private readyQueue1: Process[];
-  private readyQueue2: Process[];
-  private readyQueue3: Process[];
+  private readyQueue1: Process[] = [];
+  private readyQueue2: Process[] = [];
+  private readyQueue3: Process[] = [];
   private time: number;
   private completedQueue: Process[] = []; // Array to store process completed at a time unit
   private completedProcesses: Process[] = []; // Array to store all completed processes
-  private timeQuantums = [27409, 45686, 62712];
+  private timeQuantums: [number, number, number];
   private contextSwitches = 0;
 
-  constructor(processes: Process[]) {
+  constructor(
+    processes: Process[],
+    startTime: number,
+    timeQuantums: [number, number, number]
+  ) {
     this.processes = processes;
-    this.readyQueue1 = [];
-    this.readyQueue2 = [];
-    this.readyQueue3 = [];
-    this.time = 1136074694;
+    this.time = startTime;
+    this.timeQuantums = timeQuantums;
   }
 
-  /**
-   * Add the processes that match the arrival time to the current time to
-   * the 1st queue
-   */
   private addArrivingProcesses() {
     // Get all processes that match the arrival time
     const newProcesses = this.processes.filter(
@@ -59,16 +36,6 @@ class Scheduler {
     this.processes = [...otherProcesses];
   }
 
-  private deprioritizeProcess(process: Process) {
-    if (process.priority === 2) {
-      this.readyQueue2.push(process);
-    } else if (process.priority === 3) {
-      this.readyQueue3.push(process);
-    } else {
-      this.readyQueue1.push(process);
-    }
-  }
-
   /**
    * Display details about complete processes and cleanup queue
    */
@@ -78,6 +45,16 @@ class Scheduler {
       process.completedTime = this.time;
       this.completedProcesses.push(process);
       this.completedQueue.shift();
+    }
+  }
+
+  private deprioritizeProcess(process: Process) {
+    if (process.priority === 2) {
+      this.readyQueue2.push(process);
+    } else if (process.priority === 3) {
+      this.readyQueue3.push(process);
+    } else {
+      this.readyQueue1.push(process);
     }
   }
 
@@ -132,30 +109,24 @@ class Scheduler {
       this.readyQueue3.length > 0
     ) {
       this.addArrivingProcesses();
+
       this.executeProcess(this.readyQueue1, 1);
       this.executeProcess(this.readyQueue2, 2);
       this.executeProcess(this.readyQueue3, 3);
       this.time++;
+
       this.cleanupCompleted();
     }
 
-    console.log("> Context switches: ", this.contextSwitches);
-    console.log(
-      "> Average turnaround time: ",
+    const avgTurnaroundTime =
       this.completedProcesses
         .map((process) => process.completedTime - process.arrivalTime)
         .reduce((partialSum, a) => partialSum + a, 0) /
-        this.completedProcesses.length
-    );
+      this.completedProcesses.length;
+
+    return {
+      contextSwitches: this.contextSwitches,
+      avgTurnaroundTime,
+    };
   }
 }
-
-(async () => {
-  const data = await getData(20000);
-  const processes = data.map(
-    (process) => new Process(process.SubmitTime, process.RunTime)
-  );
-
-  const scheduler = new Scheduler(processes);
-  scheduler.run();
-})();

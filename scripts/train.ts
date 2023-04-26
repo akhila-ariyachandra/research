@@ -1,35 +1,11 @@
 import * as tf from "@tensorflow/tfjs-node-gpu";
-import { getData } from "../utils/db";
-import { MODEL_PATH, MODEL_JSON_PATH } from "../utils/constants";
-
-/**
- * Normalize the values in the input values tensor
- */
-function normalize(tensor: tf.Tensor2D) {
-  const result = tf.tidy(() => {
-    // Get minimum values
-    const MIN_VALUES = tf.min(tensor, 0);
-
-    // Get maximum values
-    const MAX_VALUES = tf.max(tensor, 0);
-
-    // Reduce values by minimum values
-    const TENSOR_SUBTRACT_MIN_VALUE = tf.sub(tensor, MIN_VALUES);
-
-    // Get range of values
-    const RANGE_SIZE = tf.sub(MAX_VALUES, MIN_VALUES);
-
-    // Get normalized values by dividing subtracted values with rangeW
-    const NORMALIZED_VALUES = tf.divNoNan(
-      TENSOR_SUBTRACT_MIN_VALUE,
-      RANGE_SIZE
-    );
-
-    return { NORMALIZED_VALUES, MIN_VALUES, MAX_VALUES };
-  });
-
-  return result;
-}
+import { getTrainingData } from "../utils/db";
+import {
+  MODEL_PATH,
+  MODEL_JSON_PATH,
+  NO_OF_TRAINING_RECS,
+} from "../utils/constants";
+import { normalize } from "../utils/machine-learning";
 
 async function train(
   model: tf.LayersModel,
@@ -71,7 +47,7 @@ async function train(
 }
 
 async function main() {
-  const { INPUTS, OUTPUTS } = await getData();
+  const { INPUTS, OUTPUTS } = await getTrainingData(NO_OF_TRAINING_RECS);
 
   // Shuffle inputs and outputs
   tf.util.shuffleCombo(INPUTS, OUTPUTS);

@@ -1,27 +1,20 @@
 import { getData } from "./utils/db";
 
 (async () => {
-  let min = 0;
-  let max = 0;
-  let total = 0;
+  const processes = await getData(20000);
 
-  const { OUTPUTS } = await getData();
+  const runTimes = processes.map((process) => process.RunTime).sort();
 
-  for (let i = 0; i < OUTPUTS.length; i++) {
-    const value = OUTPUTS[i];
-
-    if (i === 0 || value < min) {
-      min = value;
-    }
-
-    if (value > max) {
-      max = value;
-    }
-
-    total = total + value;
-  }
-
-  console.log("> min: ", min);
-  console.log("> max: ", max);
-  console.log("> average: ", total / OUTPUTS.length);
+  console.log(
+    "> 25th percentile: ",
+    runTimes[Math.round((runTimes.length - 1) * 0.25)]
+  );
+  console.log(
+    "> 50th percentile: ",
+    runTimes[Math.round((runTimes.length - 1) * 0.5)]
+  );
+  console.log(
+    "> 75th percentile: ",
+    runTimes[Math.round((runTimes.length - 1) * 0.75)]
+  );
 })();
