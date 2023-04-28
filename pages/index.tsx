@@ -23,7 +23,7 @@ const HomePage: FC = () => {
   } = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      recs: 1000,
+      recs: 3000,
     },
   });
 
@@ -110,6 +110,16 @@ const HomePage: FC = () => {
                     <strong>Number of Context Switches: </strong>
                     {basicResponse.contextSwitches}
                   </p>
+
+                  <p>
+                    <strong>Average Response Time: </strong>
+                    {basicResponse.avgResponseTime}
+                  </p>
+
+                  <p>
+                    <strong>Time Quantums: </strong>
+                    {basicResponse.timeQuantums.join(", ")}
+                  </p>
                 </>
               )}
             </td>
@@ -130,6 +140,11 @@ const HomePage: FC = () => {
                   <p>
                     <strong>Number of Context Switches: </strong>
                     {mlResponse.contextSwitches}
+                  </p>
+
+                  <p>
+                    <strong>Average Response Time: </strong>
+                    {mlResponse.avgResponseTime}
                   </p>
                 </>
               )}
@@ -153,6 +168,11 @@ const HomePage: FC = () => {
                   <p>
                     <strong>Number of Context Switches: </strong>
                     {enhancedResponse.contextSwitches}
+                  </p>
+
+                  <p>
+                    <strong>Average Response Time: </strong>
+                    {enhancedResponse.avgResponseTime}
                   </p>
                 </>
               )}

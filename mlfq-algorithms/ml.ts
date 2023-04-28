@@ -87,6 +87,10 @@ export default class MLScheduler {
 
     // Run the 1st process in the queue
     process.remainingBurstTime = process.remainingBurstTime - 1;
+    if (process.startTime === null) {
+      process.startTime = this.time;
+    }
+
     if (process.remainingBurstTime === 0) {
       // The process completes execution
       queue.shift(); // Remove the process from the queue
@@ -147,10 +151,16 @@ export default class MLScheduler {
         .map((process) => process.completedTime - process.arrivalTime)
         .reduce((partialSum, a) => partialSum + a, 0) /
       this.completedProcesses.length;
+    const avgResponseTime =
+      this.completedProcesses
+        .map((process) => process.startTime - process.arrivalTime)
+        .reduce((partialSum, a) => partialSum + a, 0) /
+      this.completedProcesses.length;
 
     return {
       contextSwitches: this.contextSwitches,
       avgTurnaroundTime,
+      avgResponseTime,
     };
   }
 }

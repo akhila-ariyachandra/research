@@ -8,8 +8,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "algo": "ts-node mlfq.ts",
-    "test": "ts-node test.ts",
     "train": "ts-node scripts/train.ts",
     "prisma:generate": "prisma generate",
     "prisma:introspection": "prisma db pull",

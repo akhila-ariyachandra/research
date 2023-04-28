@@ -1,5 +1,6 @@
 export class Process {
   arrivalTime: number;
+  startTime: number | null = null;
   burstTime: number;
   estimatedBurstTime: number;
   remainingBurstTime: number;

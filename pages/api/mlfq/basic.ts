@@ -10,11 +10,8 @@ const BasicMLFQHandler: NextApiHandler = async (req, res) => {
 
   const rows = await getData(data?.recs);
 
-  // Get static time quantums
-  const runTimes = rows.map((process) => process.RunTime).sort((a, b) => a - b);
-  const firstQuantum = runTimes[Math.round((runTimes.length - 1) * 0.25)]; // 25th percentile
-  const secondQuantum = runTimes[Math.round((runTimes.length - 1) * 0.5)]; // 50th percentile
-  const thirdQuantum = runTimes[Math.round((runTimes.length - 1) * 0.75)]; // 75th percentile
+  // Static Time Quantums
+  const [firstQuantum, secondQuantum, thirdQuantum] = [10000, 20000, 30000];
 
   // Get stating time
   const startTime = rows
@@ -29,12 +26,14 @@ const BasicMLFQHandler: NextApiHandler = async (req, res) => {
     thirdQuantum,
   ]);
 
-  const { contextSwitches, avgTurnaroundTime } = scheduler.run();
+  const { contextSwitches, avgTurnaroundTime, avgResponseTime } =
+    scheduler.run();
 
   const response: BasicMLFQResponse = {
     contextSwitches,
     timeQuantums: [firstQuantum, secondQuantum, thirdQuantum],
     avgTurnaroundTime,
+    avgResponseTime,
   };
 
   return res.status(200).json(response);

@@ -3,6 +3,7 @@ import { Job } from "@prisma/client";
 interface BasicResponse {
   contextSwitches: number;
   avgTurnaroundTime: number;
+  avgResponseTime: number;
 }
 
 export interface BasicMLFQResponse extends BasicResponse {

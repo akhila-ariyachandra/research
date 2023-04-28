@@ -60,7 +60,8 @@ const MLMLFQHandler: NextApiHandler = async (req, res) => {
 
   // Run the scheduler
   const scheduler = new MLMLFQ(processes, startTime);
-  const { contextSwitches, avgTurnaroundTime } = scheduler.run();
+  const { contextSwitches, avgTurnaroundTime, avgResponseTime } =
+    scheduler.run();
 
   // Cleanup
   INPUTS_TENSOR.dispose();
@@ -78,6 +79,7 @@ const MLMLFQHandler: NextApiHandler = async (req, res) => {
   return res.status(200).json({
     contextSwitches,
     avgTurnaroundTime,
+    avgResponseTime,
   } satisfies MLMLFQResponse);
 };
 
