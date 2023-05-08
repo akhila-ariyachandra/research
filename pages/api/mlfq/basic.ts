@@ -1,17 +1,22 @@
 import BasicMLFQ from "@/mlfq-algorithms/basic";
+import * as z from "zod";
 import type { NextApiHandler } from "next";
 import type { BasicMLFQResponse } from "@/utils/types";
 import { formSchema } from "@/utils/schema";
 import { Process } from "@/utils/classes";
 import { getData } from "@/utils/db";
 
+const requestSchema = formSchema.extend({
+  timeQuantums: z.array(z.number()).length(3),
+});
+
 const BasicMLFQHandler: NextApiHandler = async (req, res) => {
-  const data = await formSchema.parseAsync(req.body);
+  const data = await requestSchema.parseAsync(req.body);
 
   const rows = await getData(data?.recs);
 
   // Static Time Quantums
-  const [firstQuantum, secondQuantum, thirdQuantum] = [10000, 20000, 30000];
+  const [firstQuantum, secondQuantum, thirdQuantum] = data.timeQuantums;
 
   // Get stating time
   const startTime = rows

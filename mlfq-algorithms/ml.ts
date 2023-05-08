@@ -87,6 +87,7 @@ export default class MLScheduler {
 
     // Run the 1st process in the queue
     process.remainingBurstTime = process.remainingBurstTime - 1;
+    process.timeOnQueue = process.timeOnQueue + 1;
     if (process.startTime === null) {
       process.startTime = this.time;
     }
@@ -96,11 +97,9 @@ export default class MLScheduler {
       queue.shift(); // Remove the process from the queue
       this.completedQueue.push(process); // And add to completed queue
     } else {
-      const runningTime = process.burstTime - process.remainingBurstTime;
-
       // Check if the process has completed a time quantum cycle
       if (priority === 1) {
-        if (runningTime === this.timeQuantums[0]) {
+        if (process.timeOnQueue === this.timeQuantums[0]) {
           queue.shift();
           process.priority++;
           process.timeOnQueue = 0;
@@ -108,7 +107,7 @@ export default class MLScheduler {
           this.contextSwitches++; // Increase context switch count as process is paused
         }
       } else if (priority === 2) {
-        if (runningTime === this.timeQuantums[0] + this.timeQuantums[1]) {
+        if (process.timeOnQueue === this.timeQuantums[1]) {
           queue.shift();
           process.priority++;
           process.timeOnQueue = 0;
@@ -116,10 +115,7 @@ export default class MLScheduler {
           this.contextSwitches++; // Increase context switch count as process is paused
         }
       } else if (priority === 3) {
-        const timeRunningOnQ3 =
-          runningTime - this.timeQuantums[0] - this.timeQuantums[1];
-
-        if (timeRunningOnQ3 % this.timeQuantums[2] === 0) {
+        if (process.timeOnQueue === this.timeQuantums[2]) {
           process.timeOnQueue = 0;
           // Move the process to the end of the queue in the lowest priority queue
           queue.push(queue.shift() as ExtendedProcess);
