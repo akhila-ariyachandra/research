@@ -1,4 +1,5 @@
 import { ExtendedProcess } from "@/utils/classes";
+import { MIN_BURST_TIME } from "@/utils/constants";
 
 export default class MLScheduler {
   private processes: ExtendedProcess[];
@@ -57,14 +58,25 @@ export default class MLScheduler {
     const position = priority - 1;
     let timeQuantum = this.timeQuantums[position];
 
-    if (queue.length >= 1) {
-      let total = 0;
+    if (queue.length === 1) {
+      timeQuantum = queue[0].estimatedBurstTime;
+    } else if (queue.length >= 1) {
+      // Using Manhattan Distance from paper "Performance Evaluation of Dynamic Round Robin Algorithms for CPU Scheduling"
+      let min = queue[0].estimatedBurstTime;
+      let max = queue[0].estimatedBurstTime;
 
-      for (let i = 0; i < queue.length; i++) {
-        total = total + queue[i].estimatedBurstTime;
+      for (let i = 1; i < queue.length; i++) {
+        const currentEstimatedBurstTime = queue[i].estimatedBurstTime;
+        if (currentEstimatedBurstTime < min) {
+          min = currentEstimatedBurstTime;
+        }
+        if (currentEstimatedBurstTime > max) {
+          max = currentEstimatedBurstTime;
+        }
       }
 
-      timeQuantum = Math.round(total / queue.length);
+      const diff = max - min;
+      timeQuantum = diff >= MIN_BURST_TIME ? diff : MIN_BURST_TIME;
     }
 
     this.timeQuantums = this.timeQuantums.map((oldQuantum, index) =>

@@ -1,7 +1,7 @@
 import type { DbProcess } from "./types";
 import { PrismaClient } from "@prisma/client";
-import { encodeString } from "./helpers";
 import { convertToInputAndOutputArrays } from "./machine-learning";
+import { MIN_BURST_TIME } from "./constants";
 
 const prisma = new PrismaClient();
 
@@ -28,7 +28,7 @@ export const getData = async (noOfRecs: number) => {
     },
     where: {
       RunTime: {
-        gte: 10000,
+        gte: MIN_BURST_TIME,
       },
     },
   })) as DbProcess[];

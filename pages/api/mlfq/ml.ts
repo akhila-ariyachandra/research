@@ -10,6 +10,7 @@ import {
   normalize,
   convertToInputAndOutputArrays,
 } from "@/utils/machine-learning";
+import { MIN_BURST_TIME } from "@/utils/constants";
 
 const MLMLFQHandler: NextApiHandler = async (req, res) => {
   const data = await formSchema.parseAsync(req.body);
@@ -43,7 +44,7 @@ const MLMLFQHandler: NextApiHandler = async (req, res) => {
   ) as tf.Tensor2D;
   const calculatedValues = await output.data();
   const estimatedBurstTimes = calculatedValues.map((value) =>
-    value < 10000 ? 10000 : Math.round(value)
+    value < MIN_BURST_TIME ? MIN_BURST_TIME : Math.round(value)
   );
 
   // Convert jobs to processes for the scheduler
