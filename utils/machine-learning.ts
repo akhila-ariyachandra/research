@@ -1,4 +1,4 @@
-import * as tf from "@tensorflow/tfjs-node";
+import * as tf from "@tensorflow/tfjs-node-gpu";
 import type { DbProcess } from "./types";
 import { encodeString } from "./helpers";
 

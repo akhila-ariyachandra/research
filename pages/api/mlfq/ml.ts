@@ -1,5 +1,5 @@
 import MLMLFQ from "@/mlfq-algorithms/ml";
-import * as tf from "@tensorflow/tfjs-node";
+import * as tf from "@tensorflow/tfjs-node-gpu";
 import type { NextApiHandler } from "next";
 import type { MLMLFQResponse } from "@/utils/types";
 import { formSchema } from "@/utils/schema";
