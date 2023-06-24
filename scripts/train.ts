@@ -1,4 +1,4 @@
-import * as tf from "@tensorflow/tfjs-node";
+import * as tf from "@tensorflow/tfjs-node-gpu";
 import { getTrainingData } from "../utils/db";
 import {
   MODEL_PATH,

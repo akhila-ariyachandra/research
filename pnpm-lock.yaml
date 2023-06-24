@@ -42,6 +42,11 @@ dependencies:
     specifier: 3.21.4
     version: 3.21.4
 
+optionalDependencies:
+  '@tensorflow/tfjs-node-gpu':
+    specifier: 4.8.0
+    version: 4.8.0(seedrandom@3.0.5)
+
 devDependencies:
   '@tailwindcss/aspect-ratio':
     specifier: 0.4.2
@@ -504,6 +509,26 @@ packages:
     dependencies:
       '@tensorflow/tfjs-core': 4.8.0
     dev: false
+
+  /@tensorflow/tfjs-node-gpu@4.8.0(seedrandom@3.0.5):
+    resolution: {integrity: sha512-zwpIJrgCshXcUcqSBRDMZ2EXh+LGW8sVyxTHKZElll1xrJIPnO6z0FOkCZasfqp3DKKBYOg1ghpbFizbkp1tcQ==}
+    engines: {node: '>=8.11.0'}
+    requiresBuild: true
+    dependencies:
+      '@mapbox/node-pre-gyp': 1.0.9
+      '@tensorflow/tfjs': 4.8.0(seedrandom@3.0.5)
+      adm-zip: 0.5.10
+      google-protobuf: 3.21.2
+      https-proxy-agent: 2.2.4
+      progress: 2.0.3
+      rimraf: 2.7.1
+      tar: 4.4.19
+    transitivePeerDependencies:
+      - encoding
+      - seedrandom
+      - supports-color
+    dev: false
+    optional: true
 
   /@tensorflow/tfjs-node@4.8.0(seedrandom@3.0.5):
     resolution: {integrity: sha512-GNqqCUR15brznpI6Z2JAYxTTJCvuY40/r1oBSWyrpm4wHG4oaEsOpQBhXdLBYi3awhSJr9Bu2alYzPWFe5lV0g==}
